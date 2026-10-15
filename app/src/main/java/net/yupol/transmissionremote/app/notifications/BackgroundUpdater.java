@@ -1,7 +1,7 @@
 package net.yupol.transmissionremote.app.notifications;
 
 import android.content.Context;
-import android.preference.PreferenceManager;
+import androidx.preference.PreferenceManager;
 
 import net.yupol.transmissionremote.app.R;
 

@@ -9,6 +9,7 @@ import org.apache.commons.io.FilenameUtils;
 
 import java.util.Arrays;
 import java.util.HashSet;
+import java.util.Locale;
 import java.util.Set;
 
 public enum FileType {
@@ -34,7 +35,7 @@ public enum FileType {
     }
 
     public static FileType byFileName(@NonNull String name) {
-        String extension = FilenameUtils.getExtension(name).toLowerCase();
+        String extension = FilenameUtils.getExtension(name).toLowerCase(Locale.ROOT);
         for (FileType type : values()) {
             if (type.extensions.contains(extension)) return type;
         }

@@ -1,6 +1,6 @@
 package net.yupol.transmissionremote.app;
 
-import static android.preference.PreferenceManager.getDefaultSharedPreferences;
+import static androidx.preference.PreferenceManager.getDefaultSharedPreferences;
 
 import android.Manifest;
 import android.annotation.SuppressLint;
@@ -17,7 +17,7 @@ import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Build;
 import android.os.Bundle;
-import android.preference.PreferenceManager;
+import androidx.preference.PreferenceManager;
 import android.provider.MediaStore;
 import android.provider.OpenableColumns;
 import android.util.Log;
@@ -838,11 +838,11 @@ public class MainActivity extends BaseSpiceActivity implements TorrentUpdater.To
     }
 
     @Override
-    public void onBackPressed() {
+    protected void handleBackPressed() {
         if (drawer.isDrawerOpen()) drawer.closeDrawer();
         else if (searchMenuItem != null && searchMenuItem.isActionViewExpanded()) searchMenuItem.collapseActionView();
         else if (binding.addTorrentButton.isExpanded()) binding.addTorrentButton.collapse();
-        else super.onBackPressed();
+        else super.handleBackPressed();
     }
 
     @Override

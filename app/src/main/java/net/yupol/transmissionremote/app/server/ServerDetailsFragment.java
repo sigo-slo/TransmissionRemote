@@ -295,14 +295,14 @@ public class ServerDetailsFragment extends Fragment implements OnBackPressedList
                     @Override
                     public void onClick(DialogInterface dialog, int which) {
                         saveServer();
-                        getActivity().onBackPressed();
+                        requireActivity().getOnBackPressedDispatcher().onBackPressed();
                     }
                 })
                 .setNegativeButton(R.string.save_changes_discard, new DialogInterface.OnClickListener() {
                     @Override
                     public void onClick(DialogInterface dialog, int which) {
                         discardChanges();
-                        getActivity().onBackPressed();
+                        requireActivity().getOnBackPressedDispatcher().onBackPressed();
                     }
         }).create().show();
     }
@@ -356,7 +356,6 @@ public class ServerDetailsFragment extends Fragment implements OnBackPressedList
             hostNameEdit.setError(getString(R.string.host_name_error_message));
             return false;
         }
-
         return true;
     }
 

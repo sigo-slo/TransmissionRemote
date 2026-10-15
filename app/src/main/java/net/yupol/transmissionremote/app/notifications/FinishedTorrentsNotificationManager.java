@@ -5,7 +5,6 @@ import android.app.NotificationManager;
 import android.app.PendingIntent;
 import android.content.Context;
 import android.content.Intent;
-import android.os.Build;
 
 import androidx.core.app.NotificationCompat;
 import androidx.core.app.TaskStackBuilder;
@@ -82,12 +81,7 @@ public class FinishedTorrentsNotificationManager {
         }
         builder.setStyle(inboxStyle);
 
-        int flags;
-        if (Build.VERSION.SDK_INT >= 31) {
-            flags = PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_MUTABLE;
-        } else {
-            flags = PendingIntent.FLAG_UPDATE_CURRENT;
-        }
+        int flags = PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE;
         PendingIntent contentPendingIntent = PendingIntent.getActivity(
                 context,
                 0,

@@ -3,8 +3,7 @@ package net.yupol.transmissionremote.app.di
 import android.content.Context
 import com.google.firebase.analytics.FirebaseAnalytics
 import com.google.firebase.crashlytics.FirebaseCrashlytics
-import com.google.firebase.ktx.Firebase
-import com.google.firebase.remoteconfig.ktx.remoteConfig
+import com.google.firebase.remoteconfig.FirebaseRemoteConfig
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
@@ -24,7 +23,7 @@ object FirebaseModule {
 
     @Singleton
     @Provides
-    fun provideRemoteConfig() = Firebase.remoteConfig
+    fun provideRemoteConfig() = FirebaseRemoteConfig.getInstance()
 
     @Singleton
     @Provides

@@ -68,10 +68,12 @@ class OkHttpTransportManager(
         val url = try {
             HttpUrl.Builder().apply {
                 scheme(if (server.useHttps()) "https" else "http")
-                port(server.port)
+                if (server.port > 0) {
+                    port(server.port)
+                }
                 host(server.host.trim('/', '\\'))
-                if (server.rpcUrl.isNotBlank()) {
-                    val rpcPath = server.rpcUrl.trim('/', '\\')
+                if (server.urlPath.isNotBlank()) {
+                    val rpcPath = server.urlPath.trim('/', '\\')
                     addPathSegments("$rpcPath/")
                 }
             }.build()

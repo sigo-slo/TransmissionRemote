@@ -14,6 +14,7 @@ import java.net.URLDecoder;
 import java.text.DateFormat;
 import java.util.Calendar;
 import java.util.Date;
+import java.util.Locale;
 
 import static java.util.Calendar.DAY_OF_YEAR;
 import static java.util.Calendar.YEAR;
@@ -33,7 +34,7 @@ public class TextUtils {
         int i = 0;
         while (i < words.length && builder.length() < 2) {
             String word = words[i].trim();
-            if (word.length() > 0) builder.append(firstSymbol(word).toUpperCase());
+            if (word.length() > 0) builder.append(firstSymbol(word).toUpperCase(Locale.getDefault()));
             i++;
         }
 
@@ -43,14 +44,14 @@ public class TextUtils {
     public static String displayableSize(long bytes) {
         double kbytes = bytes/1024.0;
         if (kbytes < 1000)
-            return String.format("%.1f KB", kbytes);
+            return String.format(Locale.getDefault(), "%.1f KB", kbytes);
 
         double mbytes = bytes/(1024.0*1024.0);
         if (mbytes < 1000)
-            return String.format("%.1f MB", mbytes);
+            return String.format(Locale.getDefault(), "%.1f MB", mbytes);
 
         double gbytes = bytes/(1024.0*1024.0*1024.0);
-        return String.format("%.1f GB", gbytes);
+        return String.format(Locale.getDefault(), "%.1f GB", gbytes);
     }
 
     public static String displayableTime(final long timeInSeconds) {

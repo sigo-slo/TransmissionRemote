@@ -8,7 +8,7 @@ import android.content.Context
 import android.content.SharedPreferences
 import android.content.SharedPreferences.OnSharedPreferenceChangeListener
 import android.os.Build
-import android.preference.PreferenceManager
+import androidx.preference.PreferenceManager
 import androidx.appcompat.app.AppCompatDelegate
 import androidx.lifecycle.ProcessLifecycleOwner
 import androidx.lifecycle.lifecycleScope
@@ -109,7 +109,7 @@ class TransmissionRemote : Application(), OnSharedPreferenceChangeListener {
         createNotificationChannel()
     }
 
-    override fun onSharedPreferenceChanged(sharedPreferences: SharedPreferences, key: String) {
+    override fun onSharedPreferenceChanged(sharedPreferences: SharedPreferences, key: String?) {
         if (key == getString(R.string.torrent_finished_notification_enabled_key)) {
             if (isNotificationEnabled) {
                 BackgroundUpdater.start(this)
