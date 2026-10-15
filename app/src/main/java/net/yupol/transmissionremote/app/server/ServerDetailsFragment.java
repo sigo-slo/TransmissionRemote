@@ -18,6 +18,7 @@ import android.widget.Button;
 import android.widget.CheckBox;
 import android.widget.EditText;
 import android.widget.Spinner;
+import android.widget.TextView;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
@@ -40,7 +41,7 @@ public class ServerDetailsFragment extends Fragment implements OnBackPressedList
     private static final String CHARS_TO_STRIP_RPC = "/";
     private static final String PROTOCOL_HTTP = "http";
     private static final String PROTOCOL_HTTPS = "https";
-    private static final String[] PROTOCOLS = { PROTOCOL_HTTP, PROTOCOL_HTTPS };
+    private static final String[] PROTOCOLS = { PROTOCOL_HTTPS, PROTOCOL_HTTP };
 
     private boolean isAuthEnabled = false;
 
@@ -48,7 +49,7 @@ public class ServerDetailsFragment extends Fragment implements OnBackPressedList
     private Spinner protocolSpinner;
     private EditText hostNameEdit;
     private EditText portNumberEdit;
-    private CheckBox selfSignedSslCheckbox;
+    private TextView insecureHttpWarning;
     private CheckBox authCheckBox;
     private EditText userNameEdit;
     private EditText passwordEdit;
@@ -68,7 +69,7 @@ public class ServerDetailsFragment extends Fragment implements OnBackPressedList
         protocolSpinner = view.findViewById(R.id.protocol_spinner);
         hostNameEdit = view.findViewById(R.id.host_edit_text);
         portNumberEdit = view.findViewById(R.id.port_edit_text);
-        selfSignedSslCheckbox = view.findViewById(R.id.self_signed_ssl_checkbox);
+        insecureHttpWarning = view.findViewById(R.id.insecure_http_warning);
         authCheckBox = view.findViewById(R.id.aunthentication_checkbox);
         userNameEdit = view.findViewById(R.id.user_name_edit_text);
         passwordEdit = view.findViewById(R.id.password_edit_text);
@@ -109,7 +110,7 @@ public class ServerDetailsFragment extends Fragment implements OnBackPressedList
             @Override
             public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
                 boolean isHttps = PROTOCOL_HTTPS.equals(protocolSpinner.getSelectedItem());
-                selfSignedSslCheckbox.setEnabled(isHttps);
+                insecureHttpWarning.setVisibility(isHttps ? View.GONE : View.VISIBLE);
                 if (server == null) { // only if creating new server
                     int port = getUiPort();
                     if (isHttps) {
@@ -172,7 +173,7 @@ public class ServerDetailsFragment extends Fragment implements OnBackPressedList
         }
         server.setRpcUrl(getUiRpcUrl());
         server.setUseHttps(getUiUseHttps());
-        server.setTrustSelfSignedSslCert(getUiTrustSelfSignedCert());
+        server.setTrustSelfSignedSslCert(false);
 
         return server;
     }
@@ -200,7 +201,7 @@ public class ServerDetailsFragment extends Fragment implements OnBackPressedList
         server.setPassword(getUiPassword());
         server.setRpcUrl(getUiRpcUrl());
         server.setUseHttps(getUiUseHttps());
-        server.setTrustSelfSignedSslCert(getUiTrustSelfSignedCert());
+        server.setTrustSelfSignedSslCert(false);
 
         // clear redirect location after each sever settings change
         server.setRedirectLocation(null);
@@ -225,9 +226,7 @@ public class ServerDetailsFragment extends Fragment implements OnBackPressedList
             return true;
         if (!getUiRpcUrl().equals(server.getRpcUrl()))
             return true;
-        if (getUiUseHttps() != server.useHttps())
-            return true;
-        return getUiTrustSelfSignedCert() != server.getTrustSelfSignedSslCert();
+        return getUiUseHttps() != server.useHttps();
     }
 
     private void discardChanges() {
@@ -259,9 +258,6 @@ public class ServerDetailsFragment extends Fragment implements OnBackPressedList
         if (getUiUseHttps() != server.useHttps()) {
             protocolSpinner.setSelection(ArrayUtils.indexOf(PROTOCOLS, server.useHttps() ? PROTOCOL_HTTPS : PROTOCOL_HTTP));
         }
-        if (getUiTrustSelfSignedCert() != server.getTrustSelfSignedSslCert()) {
-            selfSignedSslCheckbox.setChecked(server.getTrustSelfSignedSslCert());
-        }
     }
 
     private void updateUI(Server server) {
@@ -269,18 +265,16 @@ public class ServerDetailsFragment extends Fragment implements OnBackPressedList
             serverNameEdit.setText("");
             protocolSpinner.setSelection(0);
             hostNameEdit.setText("");
-            portNumberEdit.setText(String.valueOf(DEFAULT_PORT));
-            selfSignedSslCheckbox.setChecked(false);
+            portNumberEdit.setText(String.valueOf(DEFAULT_HTTPS_PORT));
             userNameEdit.setText("");
             passwordEdit.setText("");
             rpcUrlEdit.setText(Server.DEFAULT_RPC_URL);
         } else {
             serverNameEdit.setText(server.getName());
-            protocolSpinner.setSelection(server.useHttps() ? 1 : 0);
+            protocolSpinner.setSelection(ArrayUtils.indexOf(PROTOCOLS, server.useHttps() ? PROTOCOL_HTTPS : PROTOCOL_HTTP));
             hostNameEdit.setText(server.getHost());
             int port = server.getPort();
             portNumberEdit.setText(port >= 0 ? String.valueOf(port) : "");
-            selfSignedSslCheckbox.setChecked(server.getTrustSelfSignedSslCert());
             updateAuth(server.isAuthenticationEnabled());
             userNameEdit.setText(server.getUserName());
             passwordEdit.setText(server.getPassword());
@@ -295,14 +289,14 @@ public class ServerDetailsFragment extends Fragment implements OnBackPressedList
                     @Override
                     public void onClick(DialogInterface dialog, int which) {
                         saveServer();
-                        getActivity().onBackPressed();
+                        requireActivity().getOnBackPressedDispatcher().onBackPressed();
                     }
                 })
                 .setNegativeButton(R.string.save_changes_discard, new DialogInterface.OnClickListener() {
                     @Override
                     public void onClick(DialogInterface dialog, int which) {
                         discardChanges();
-                        getActivity().onBackPressed();
+                        requireActivity().getOnBackPressedDispatcher().onBackPressed();
                     }
         }).create().show();
     }
@@ -343,10 +337,6 @@ public class ServerDetailsFragment extends Fragment implements OnBackPressedList
         return PROTOCOL_HTTPS.equals(protocolSpinner.getSelectedItem());
     }
 
-    private boolean getUiTrustSelfSignedCert() {
-        return selfSignedSslCheckbox.isChecked();
-    }
-
     private boolean checkValidity() {
         if (TextUtils.getTrimmedLength(serverNameEdit.getText()) == 0) {
             serverNameEdit.setError(getString(R.string.server_name_error_message));
@@ -356,7 +346,10 @@ public class ServerDetailsFragment extends Fragment implements OnBackPressedList
             hostNameEdit.setError(getString(R.string.host_name_error_message));
             return false;
         }
-
+        if (isAuthEnabled && !getUiUseHttps()) {
+            passwordEdit.setError(getString(R.string.http_authentication_not_allowed));
+            return false;
+        }
         return true;
     }
 

@@ -48,6 +48,7 @@ class AddServerTest {
         }
         addServer {
             enterServerName("Test server")
+            selectHttp()
             enterHostName(server.hostName)
             enterPort(server.port)
             clickOk()

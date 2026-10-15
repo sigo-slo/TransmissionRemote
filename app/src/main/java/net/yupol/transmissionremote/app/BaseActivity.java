@@ -1,14 +1,36 @@
 package net.yupol.transmissionremote.app;
 
+import android.os.Bundle;
+
+import androidx.activity.OnBackPressedCallback;
+import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.fragment.app.Fragment;
 
 public abstract class BaseActivity extends AppCompatActivity {
 
+    private final OnBackPressedCallback backPressedCallback = new OnBackPressedCallback(true) {
+        @Override
+        public void handleOnBackPressed() {
+            handleBackPressed();
+        }
+    };
+
     @Override
-    public void onBackPressed() {
+    protected void onCreate(@Nullable Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        getOnBackPressedDispatcher().addCallback(this, backPressedCallback);
+    }
+
+    protected void handleBackPressed() {
         boolean handled = handleBackPressByFragments();
-        if (!handled) super.onBackPressed();
+        if (!handled) navigateBack();
+    }
+
+    protected final void navigateBack() {
+        backPressedCallback.setEnabled(false);
+        getOnBackPressedDispatcher().onBackPressed();
+        backPressedCallback.setEnabled(true);
     }
 
     /**

@@ -3,7 +3,7 @@ package net.yupol.transmissionremote.app.torrentdetails;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.os.Bundle;
-import android.preference.PreferenceManager;
+import androidx.preference.PreferenceManager;
 import android.util.Log;
 import android.util.SparseArray;
 import android.view.Menu;
@@ -135,7 +135,7 @@ public class TorrentDetailsActivity extends BaseSpiceActivity implements SaveCha
 
     private void showErrorAndExit() {
         Toast.makeText(TorrentDetailsActivity.this, R.string.error_retrieve_torrent_details, Toast.LENGTH_LONG).show();
-        onBackPressed();
+        getOnBackPressedDispatcher().onBackPressed();
     }
 
     @Override
@@ -222,7 +222,7 @@ public class TorrentDetailsActivity extends BaseSpiceActivity implements SaveCha
     }
 
     @Override
-    public void onBackPressed() {
+    protected void handleBackPressed() {
         boolean handled = handleBackPressByFragments();
         if (handled) return;
         handleExit();
@@ -309,12 +309,12 @@ public class TorrentDetailsActivity extends BaseSpiceActivity implements SaveCha
             TorrentSetRequest request = saveChangesRequests.valueAt(i);
             getTransportManager().doRequest(request, null);
         }
-        super.onBackPressed();
+        navigateBack();
     }
 
     @Override
     public void onDiscardPressed() {
-        super.onBackPressed();
+        navigateBack();
     }
 
     @Override
@@ -328,7 +328,7 @@ public class TorrentDetailsActivity extends BaseSpiceActivity implements SaveCha
 
             @Override
             public void onRequestSuccess(Void aVoid) {
-                TorrentDetailsActivity.super.onBackPressed();
+                navigateBack();
             }
         });
     }

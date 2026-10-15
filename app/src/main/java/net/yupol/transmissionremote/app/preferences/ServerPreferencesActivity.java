@@ -85,11 +85,11 @@ public class ServerPreferencesActivity extends BaseSpiceActivity implements Save
     }
 
     @Override
-    public void onBackPressed() {
+    protected void handleBackPressed() {
         ServerPreferencesFragment fragment = (ServerPreferencesFragment)
                 getSupportFragmentManager().findFragmentByTag(TAG_SERVER_PREFERENCES_FRAGMENT);
         if (fragment == null) {
-            super.onBackPressed();
+            navigateBack();
             return;
         }
 
@@ -98,7 +98,7 @@ public class ServerPreferencesActivity extends BaseSpiceActivity implements Save
             saveChangesRequest = requestBuilder.build();
             new SaveChangesDialogFragment().show(getFragmentManager(), TAG_SAVE_CHANGES_DIALOG);
         } else {
-            super.onBackPressed();
+            navigateBack();
         }
     }
 
@@ -106,7 +106,7 @@ public class ServerPreferencesActivity extends BaseSpiceActivity implements Save
     public boolean onOptionsItemSelected(MenuItem item) {
         switch (item.getItemId()) {
             case android.R.id.home:
-                onBackPressed();
+                getOnBackPressedDispatcher().onBackPressed();
                 return true;
         }
         return super.onOptionsItemSelected(item);
@@ -117,12 +117,12 @@ public class ServerPreferencesActivity extends BaseSpiceActivity implements Save
     @Override
     public void onSavePressed() {
         getTransportManager().doRequest(saveChangesRequest, null);
-        super.onBackPressed();
+        navigateBack();
     }
 
     @Override
     public void onDiscardPressed() {
-        super.onBackPressed();
+        navigateBack();
     }
 
     private void showPreferencesFragment(ServerSettings settings) {

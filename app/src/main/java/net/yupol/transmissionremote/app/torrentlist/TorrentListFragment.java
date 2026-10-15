@@ -5,7 +5,7 @@ import android.content.Context;
 import android.graphics.Color;
 import android.graphics.Rect;
 import android.os.Bundle;
-import android.preference.PreferenceManager;
+import androidx.preference.PreferenceManager;
 import android.text.Spannable;
 import android.text.SpannableString;
 import android.text.Spanned;
@@ -440,8 +440,10 @@ public class TorrentListFragment extends Fragment implements ChooseLocationDialo
                             torrentSelectedListener.onTorrentSelected(viewHolder.torrent);
                         }
                     } else {
+                        int position = viewHolder.getBindingAdapterPosition();
+                        if (position == RecyclerView.NO_POSITION) return;
                         v.setSelected(true);
-                        toggleSelection(viewHolder.getAdapterPosition());
+                        toggleSelection(position);
                     }
                 }
             });
@@ -454,7 +456,10 @@ public class TorrentListFragment extends Fragment implements ChooseLocationDialo
                     }
 
                     actionMode = requireActivity().startActionMode(actionModeCallback);
-                    toggleSelection(viewHolder.getAdapterPosition());
+                    int position = viewHolder.getBindingAdapterPosition();
+                    if (position != RecyclerView.NO_POSITION) {
+                        toggleSelection(position);
+                    }
                     return true;
                 }
             });
@@ -469,21 +474,24 @@ public class TorrentListFragment extends Fragment implements ChooseLocationDialo
             holder.pauseResumeBtn.setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View v) {
+                    int currentPosition = holder.getBindingAdapterPosition();
+                    if (currentPosition == RecyclerView.NO_POSITION) return;
+                    Torrent currentTorrent = getItemAtPosition(currentPosition);
                     PlayPauseButton btn = (PlayPauseButton) v;
                     boolean wasPaused = btn.isPaused();
                     btn.toggle();
 
                     Request<Void> request = wasPaused
-                            ? new StartTorrentRequest(Collections.singletonList(torrent))
-                            : new StopTorrentRequest(Collections.singletonList(torrent));
-                    sendRequestAndUpdateTorrents(request, torrent.getId());
+                            ? new StartTorrentRequest(Collections.singletonList(currentTorrent))
+                            : new StopTorrentRequest(Collections.singletonList(currentTorrent));
+                    sendRequestAndUpdateTorrents(request, currentTorrent.getId());
                 }
             });
 
             if (inSearchMode) {
                 Spannable text = new SpannableString(torrent.getName());
-                String torrentNameLowerCase = torrent.getName().toLowerCase();
-                String searchQueryLowerCase = searchQuery.toLowerCase();
+                String torrentNameLowerCase = torrent.getName().toLowerCase(Locale.ROOT);
+                String searchQueryLowerCase = searchQuery.toLowerCase(Locale.ROOT);
                 int start = torrentNameLowerCase.indexOf(searchQueryLowerCase);
                 while (start >= 0) {
                     int end = start + searchQuery.length();
@@ -571,7 +579,8 @@ public class TorrentListFragment extends Fragment implements ChooseLocationDialo
                 }
             }
 
-            holder.selectedOverlay.setVisibility(isSelected(position) ? View.VISIBLE : View.INVISIBLE);
+            boolean isSelected = selectedItemsIds.get(torrent.getId(), false);
+            holder.selectedOverlay.setVisibility(isSelected ? View.VISIBLE : View.INVISIBLE);
         }
 
         public int getSelectedItemsCount() {

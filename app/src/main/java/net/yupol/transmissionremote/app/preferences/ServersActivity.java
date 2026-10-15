@@ -114,7 +114,7 @@ public class ServersActivity extends BaseActivity {
                                 Server server = detailsFragment.getServerArgument();
                                 if (server != null) {
                                     app.removeServer(server);
-                                    onBackPressed();
+                                    getOnBackPressedDispatcher().onBackPressed();
                                 }
                             }
                         }
@@ -127,7 +127,7 @@ public class ServersActivity extends BaseActivity {
                 if (detailsFragment != null) {
                     detailsFragment.saveServer();
                     app.updateServer(detailsFragment.getServerArgument());
-                    onBackPressed();
+                    getOnBackPressedDispatcher().onBackPressed();
                     Toast.makeText(this, R.string.saved, Toast.LENGTH_SHORT).show();
                 } else {
                     Log.e(TAG, "ServerDetailsFragment is not active while save server action performed");
@@ -156,6 +156,7 @@ public class ServersActivity extends BaseActivity {
     }
 
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+        super.onActivityResult(requestCode, resultCode, data);
         if (requestCode == REQUEST_CODE_NEW_SERVER) {
             if (resultCode == RESULT_OK) {
                 Server server = data.getParcelableExtra(AddServerActivity.EXTRA_SEVER);

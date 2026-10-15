@@ -74,6 +74,8 @@
     <string name="password">Password</string>
     <string name="server_name_error_message">Name must be non-empty</string>
     <string name="host_name_error_message">Enter IP address or hostname of the computer on which Transmission is launched</string>
+    <string name="insecure_http_warning">HTTP is not encrypted. Use HTTPS whenever possible.</string>
+    <string name="http_authentication_not_allowed">Authentication requires HTTPS to protect your password</string>
     <string name="port_number_error_message">Please, enter port number. It must be the same as specified in \'Listening port\' field on \'Remote\' tab of Transmission preferences dialog</string>
     <string name="servers">Servers</string>
     <string name="add_remove_servers">Add or remove servers</string>

@@ -71,7 +71,7 @@ public class ChooseLocationDialogFragment extends DialogFragment {
     @Override
     public Dialog onCreateDialog(Bundle savedInstanceState) {
 
-        binding = DataBindingUtil.inflate(LayoutInflater.from(getContext()), R.layout.set_location_dialog, null, false);
+        binding = DataBindingUtil.inflate(getLayoutInflater(), R.layout.set_location_dialog, null, false);
         binding.locationEdit.addTextChangedListener(new SimpleTextWatcher() {
             @Override
             public void afterTextChanged(Editable s) {

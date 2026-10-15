@@ -2,7 +2,7 @@ package net.yupol.transmissionremote.app.drawer;
 
 import android.content.Context;
 import android.content.SharedPreferences;
-import android.preference.PreferenceManager;
+import androidx.preference.PreferenceManager;
 import android.util.AttributeSet;
 import android.util.Log;
 import android.view.View;
@@ -13,6 +13,9 @@ import android.widget.TextView;
 
 import androidx.annotation.NonNull;
 import androidx.core.content.ContextCompat;
+import androidx.core.graphics.Insets;
+import androidx.core.view.ViewCompat;
+import androidx.core.view.WindowInsetsCompat;
 
 import com.mikepenz.materialdrawer.Drawer;
 import com.mikepenz.materialdrawer.model.PrimaryDrawerItem;
@@ -126,19 +129,15 @@ public class HeaderView extends RelativeLayout implements View.OnClickListener {
         serverCircleSmallSecond = findViewById(R.id.circle_2);
         serverCircleSmallSecond.setOnClickListener(this);
 
-        final int statusBarHeight = getStatusBarHeight();
-        ((LayoutParams) serverCircleCurrent.getLayoutParams()).topMargin += statusBarHeight;
         final View circleSecondaryLayout = findViewById(R.id.circle_secondary_layout);
-        ((LayoutParams) circleSecondaryLayout.getLayoutParams()).topMargin += statusBarHeight;
-    }
-
-    private int getStatusBarHeight() {
-        int result = 0;
-        int resourceId = getResources().getIdentifier("status_bar_height", "dimen", "android");
-        if (resourceId > 0) {
-            result = getResources().getDimensionPixelSize(resourceId);
-        }
-        return result;
+        final int currentCircleTopMargin = ((LayoutParams) serverCircleCurrent.getLayoutParams()).topMargin;
+        final int secondaryCirclesTopMargin = ((LayoutParams) circleSecondaryLayout.getLayoutParams()).topMargin;
+        ViewCompat.setOnApplyWindowInsetsListener(this, (view, windowInsets) -> {
+            Insets statusBars = windowInsets.getInsets(WindowInsetsCompat.Type.statusBars());
+            ((LayoutParams) serverCircleCurrent.getLayoutParams()).topMargin = currentCircleTopMargin + statusBars.top;
+            ((LayoutParams) circleSecondaryLayout.getLayoutParams()).topMargin = secondaryCirclesTopMargin + statusBars.top;
+            return windowInsets;
+        });
     }
 
     public void setServers(List<Server> servers, int currentServerPosition) {

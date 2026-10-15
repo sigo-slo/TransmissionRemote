@@ -15,7 +15,7 @@ import com.octo.android.robospice.request.listener.RequestListener;
 import net.yupol.transmissionremote.app.TransmissionRemote;
 import net.yupol.transmissionremote.app.model.json.Torrents;
 import net.yupol.transmissionremote.app.server.Server;
-import net.yupol.transmissionremote.app.transport.RequestExecutor;
+import net.yupol.transmissionremote.app.transport.okhttp.OkHttpTransportManager;
 import net.yupol.transmissionremote.app.transport.request.TorrentGetRequest;
 
 import java.util.List;
@@ -35,11 +35,10 @@ public class BackgroundUpdateJob extends Job {
 
         List<Server> servers = TransmissionRemote.getApplication(context).getServers();
         final CountDownLatch countDownLatch = new CountDownLatch(servers.size());
-        final RequestExecutor requestExecutor = new RequestExecutor(context);
         final FinishedTorrentsNotificationManager finishedTorrentsNotificationManager = new FinishedTorrentsNotificationManager(context);
 
         for (final Server server : servers) {
-            requestExecutor.executeRequest(new TorrentGetRequest(), server, new RequestListener<Torrents>() {
+            new OkHttpTransportManager(server).doRequest(new TorrentGetRequest(), new RequestListener<Torrents>() {
                 @Override
                 public void onRequestSuccess(Torrents torrents) {
                     finishedTorrentsNotificationManager.checkForFinishedTorrents(server, torrents);
@@ -57,7 +56,7 @@ public class BackgroundUpdateJob extends Job {
         try {
             countDownLatch.await(2, TimeUnit.MINUTES);
         } catch (InterruptedException e) {
-            requestExecutor.unregisterAllListeners();
+            Thread.currentThread().interrupt();
             return Result.FAILURE;
         }
 

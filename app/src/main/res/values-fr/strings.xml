@@ -232,7 +232,7 @@
     </plurals>
 
     <plurals name="torrents_finished">
-        <item quantity="one">Torrent est terminé</item>
+        <item quantity="one">%d torrent est terminé</item>
         <item quantity="other">%d torrents sont terminés</item>
     </plurals>
     <string name="night_mode">Mode nuit</string>

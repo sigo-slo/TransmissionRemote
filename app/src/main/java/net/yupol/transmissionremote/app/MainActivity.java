@@ -1,6 +1,6 @@
 package net.yupol.transmissionremote.app;
 
-import static android.preference.PreferenceManager.getDefaultSharedPreferences;
+import static androidx.preference.PreferenceManager.getDefaultSharedPreferences;
 
 import android.Manifest;
 import android.annotation.SuppressLint;
@@ -17,7 +17,7 @@ import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Build;
 import android.os.Bundle;
-import android.preference.PreferenceManager;
+import androidx.preference.PreferenceManager;
 import android.provider.MediaStore;
 import android.provider.OpenableColumns;
 import android.util.Log;
@@ -98,15 +98,16 @@ import net.yupol.transmissionremote.app.transport.request.TorrentRemoveRequest;
 
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.FilenameUtils;
-import org.apache.commons.io.IOUtils;
 import org.json.JSONException;
 import org.json.JSONObject;
 
+import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.URL;
+import java.net.URLConnection;
 import java.util.Collection;
 import java.util.List;
 import java.util.Timer;
@@ -144,6 +145,9 @@ public class MainActivity extends BaseSpiceActivity implements TorrentUpdater.To
     private static final String SCHEME_HTTPS = "https";
 
     private static final long UPDATE_REQUEST_DELAY = 500;
+    private static final int TORRENT_DOWNLOAD_CONNECT_TIMEOUT_MS = 15_000;
+    private static final int TORRENT_DOWNLOAD_READ_TIMEOUT_MS = 30_000;
+    private static final int MAX_TORRENT_FILE_BYTES = 10 * 1024 * 1024;
 
     private static final String KEY_DRAWER_SERVER_LIST_EXPANDED = "key_drawer_server_list_expanded";
     private static final String KEY_SEARCH_ACTION_EXPANDED = "key_search_action_expanded";
@@ -229,7 +233,6 @@ public class MainActivity extends BaseSpiceActivity implements TorrentUpdater.To
         SplashScreen.installSplashScreen(this);
         application = TransmissionRemote.getApplication(this);
         super.onCreate(savedInstanceState);
-        logAppStartupTime();
         binding = DataBindingUtil.setContentView(this, R.layout.main_activity);
 
         finishedTorrentsNotificationManager = new FinishedTorrentsNotificationManager(this);
@@ -245,13 +248,6 @@ public class MainActivity extends BaseSpiceActivity implements TorrentUpdater.To
             openTorrentUri = savedInstanceState.getParcelable(KEY_OPEN_TORRENT_URI);
             openTorrentScheme = savedInstanceState.getString(KEY_OPEN_TORRENT_SCHEME);
         }
-    }
-
-    private void logAppStartupTime() {
-        if (application.appStartupTimeReported) return;
-        final long startupTimeMillis = System.currentTimeMillis() - application.appStartTimestampMillis;
-        application.getAnalytics().logStartupTimeSLI(startupTimeMillis);
-        application.appStartupTimeReported = true;
     }
 
     private void setupActionBar() {
@@ -838,11 +834,11 @@ public class MainActivity extends BaseSpiceActivity implements TorrentUpdater.To
     }
 
     @Override
-    public void onBackPressed() {
+    protected void handleBackPressed() {
         if (drawer.isDrawerOpen()) drawer.closeDrawer();
         else if (searchMenuItem != null && searchMenuItem.isActionViewExpanded()) searchMenuItem.collapseActionView();
         else if (binding.addTorrentButton.isExpanded()) binding.addTorrentButton.collapse();
-        else super.onBackPressed();
+        else super.handleBackPressed();
     }
 
     @Override
@@ -1167,7 +1163,7 @@ public class MainActivity extends BaseSpiceActivity implements TorrentUpdater.To
         Bundle args = new Bundle();
         args.putInt(DownloadLocationDialogFragment.KEY_REQUEST_CODE, DownloadLocationDialogFragment.REQUEST_CODE_BY_LOCAL_FILE);
         try {
-            args.putByteArray(DownloadLocationDialogFragment.KEY_FILE_BYTES, IOUtils.toByteArray(fileStream));
+            args.putByteArray(DownloadLocationDialogFragment.KEY_FILE_BYTES, readTorrentFile(fileStream));
         } catch (IOException e) {
             Log.e(TAG, "Failed to read file stream", e);
             Toast.makeText(MainActivity.this, getString(R.string.error_cannot_read_file_msg), Toast.LENGTH_SHORT).show();
@@ -1219,8 +1215,15 @@ public class MainActivity extends BaseSpiceActivity implements TorrentUpdater.To
             String uri = torrentFileUris[0].toString();
             InputStream inputStream = null;
             try {
-                inputStream = new URL(uri).openConnection().getInputStream();
-                return IOUtils.toByteArray(inputStream);
+                URLConnection connection = new URL(uri).openConnection();
+                connection.setConnectTimeout(TORRENT_DOWNLOAD_CONNECT_TIMEOUT_MS);
+                connection.setReadTimeout(TORRENT_DOWNLOAD_READ_TIMEOUT_MS);
+                long contentLength = connection.getContentLengthLong();
+                if (contentLength > MAX_TORRENT_FILE_BYTES) {
+                    throw new IOException("Torrent file exceeds the size limit");
+                }
+                inputStream = connection.getInputStream();
+                return readTorrentFile(inputStream);
             } catch (IOException e) {
                 Log.e(TAG, "Failed to retrieve Uri '" + uri + "'", e);
             } finally {
@@ -1232,5 +1235,20 @@ public class MainActivity extends BaseSpiceActivity implements TorrentUpdater.To
             }
             return null;
         }
+    }
+
+    private static byte[] readTorrentFile(InputStream inputStream) throws IOException {
+        ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
+        byte[] buffer = new byte[8192];
+        int totalBytes = 0;
+        int bytesRead;
+        while ((bytesRead = inputStream.read(buffer)) != -1) {
+            totalBytes += bytesRead;
+            if (totalBytes > MAX_TORRENT_FILE_BYTES) {
+                throw new IOException("Torrent file exceeds the size limit");
+            }
+            outputStream.write(buffer, 0, bytesRead);
+        }
+        return outputStream.toByteArray();
     }
 }

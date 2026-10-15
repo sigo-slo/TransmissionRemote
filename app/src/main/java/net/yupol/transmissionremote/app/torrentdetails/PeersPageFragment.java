@@ -2,7 +2,7 @@ package net.yupol.transmissionremote.app.torrentdetails;
 
 import android.content.SharedPreferences;
 import android.os.Bundle;
-import android.preference.PreferenceManager;
+import androidx.preference.PreferenceManager;
 import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuInflater;
@@ -19,7 +19,6 @@ import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.swiperefreshlayout.widget.SwipeRefreshLayout;
 
 import net.yupol.transmissionremote.app.R;
-import net.yupol.transmissionremote.app.TransmissionRemote;
 import net.yupol.transmissionremote.app.databinding.TorrentDetailsPeersPageFragmentBinding;
 import net.yupol.transmissionremote.app.model.json.Peer;
 import net.yupol.transmissionremote.app.model.json.TorrentInfo;
@@ -73,15 +72,6 @@ public class PeersPageFragment extends BasePageFragment {
         viewCreated = true;
 
         return binding.getRoot();
-    }
-
-    @Override
-    public void onResume() {
-        super.onResume();
-        TransmissionRemote.getInstance().getAnalytics().logScreenView(
-                "Peers page",
-                PeersPageFragment.class
-        );
     }
 
     @Override

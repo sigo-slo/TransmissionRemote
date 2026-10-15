@@ -4,12 +4,13 @@ import android.content.Context;
 import android.content.res.TypedArray;
 import android.util.AttributeSet;
 import android.view.View;
-import android.widget.ImageButton;
+
+import androidx.appcompat.widget.AppCompatImageButton;
 
 import net.yupol.transmissionremote.app.R;
 import net.yupol.transmissionremote.app.utils.CheatSheet;
 
-public class TurtleModeButton extends ImageButton implements View.OnClickListener {
+public class TurtleModeButton extends AppCompatImageButton implements View.OnClickListener {
 
     private boolean isEnabled;
     private int enabledRes;

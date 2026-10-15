@@ -1,6 +1,7 @@
 package net.yupol.transmissionremote.app.preferences
 
 import android.Manifest
+import android.content.ActivityNotFoundException
 import android.content.Intent
 import android.content.SharedPreferences.OnSharedPreferenceChangeListener
 import android.content.pm.PackageManager
@@ -87,8 +88,10 @@ class NotificationPreferencesFragment : PreferenceFragmentCompat() {
     private fun openNotificationsSettings() {
         val intent = Intent(Settings.ACTION_APP_NOTIFICATION_SETTINGS)
             .putExtra(Settings.EXTRA_APP_PACKAGE, requireContext().packageName)
-        if (intent.resolveActivity(requireContext().packageManager) != null) {
+        try {
             startActivity(intent, null)
+        } catch (_: ActivityNotFoundException) {
+            // Some vendor Android builds do not expose this settings screen.
         }
     }
 
@@ -96,8 +99,10 @@ class NotificationPreferencesFragment : PreferenceFragmentCompat() {
         val intent = Intent(Settings.ACTION_CHANNEL_NOTIFICATION_SETTINGS)
             .putExtra(Settings.EXTRA_CHANNEL_ID, TransmissionRemote.NOTIFICATION_CHANNEL_ID)
             .putExtra(Settings.EXTRA_APP_PACKAGE, requireContext().packageName)
-        if (intent.resolveActivity(requireContext().packageManager) != null) {
+        try {
             startActivity(intent, null)
+        } catch (_: ActivityNotFoundException) {
+            // Some vendor Android builds do not expose this settings screen.
         }
     }
 
