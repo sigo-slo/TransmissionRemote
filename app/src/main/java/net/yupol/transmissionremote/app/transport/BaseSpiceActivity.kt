@@ -21,21 +21,6 @@ abstract class BaseSpiceActivity : BaseActivity() {
         super.onCreate(savedInstanceState)
     }
 
-    override fun onStart() {
-        (transportManager as? SpiceTransportManager)?.start(this)
-        super.onStart()
-    }
-
-    override fun onStop() {
-        (transportManager as? SpiceTransportManager)?.apply {
-            if (isStarted) {
-                cancelAllRequests()
-                shouldStop()
-            }
-        }
-        super.onStop()
-    }
-
     override fun onDestroy() {
         val app = application as TransmissionRemote
         app.removeOnActiveServerChangedListener(activeServerListener)
@@ -47,13 +32,6 @@ abstract class BaseSpiceActivity : BaseActivity() {
     }
 
     private fun updatedTransportManager(server: Server?): TransportManager? {
-        val app = TransmissionRemote.instance
-        return if (app.featureManager.useOkHttp()) {
-            server?.let { OkHttpTransportManager(server) }
-        } else {
-            ((transportManager as? SpiceTransportManager) ?: SpiceTransportManager()).apply {
-                setServer(server)
-            }
-        }
+        return server?.let(::OkHttpTransportManager)
     }
 }

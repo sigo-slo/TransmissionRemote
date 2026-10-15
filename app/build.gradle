@@ -14,8 +14,8 @@ android {
     defaultConfig {
         minSdkVersion 26
         targetSdkVersion 36
-        versionCode 92000
-        versionName '0.9.20'
+        versionCode 92100
+        versionName '0.9.21'
         applicationId 'net.yupol.transmissionremote.app'
         testInstrumentationRunner 'androidx.test.runner.AndroidJUnitRunner'
         testInstrumentationRunnerArguments clearPackageData: 'true'
@@ -28,15 +28,11 @@ android {
         jvmTarget = '17'
     }
     buildTypes {
-        debug {
-            manifestPlaceholders.crashlyticsEnabled = false
-        }
+        debug {}
         release {
             minifyEnabled true
             shrinkResources true
             proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
-            manifestPlaceholders.crashlyticsEnabled = true
-
         }
     }
     lint {
@@ -83,7 +79,9 @@ dependencies {
     implementation 'com.google.android.material:material:1.14.0'
     implementation 'com.google.guava:guava:33.7.2-android'
     implementation 'com.google.code.gson:gson:2.10.1'
-    implementation('com.octo.android.robospice:robospice:1.4.14')
+    implementation('com.octo.android.robospice:robospice:1.4.14') {
+        exclude group: 'org.apache.commons', module: 'commons-io'
+    }
     implementation('com.octo.android.robospice:robospice-google-http-client:1.4.14') {
         exclude (group: 'org.apache.httpcomponents', module: 'httpclient')
     }
@@ -101,7 +99,9 @@ dependencies {
 
     implementation 'com.evernote:android-job:1.4.3'
 
-    implementation 'commons-io:commons-io:2.13.0'
+    implementation 'commons-io:commons-io:2.18.0'
+    implementation 'org.apache.commons:commons-lang3:3.18.0'
+    implementation 'com.fasterxml.jackson.core:jackson-core:2.18.11'
 
     // Emoji
     implementation('com.vdurmont:emoji-java:4.0.0') {
@@ -111,7 +111,6 @@ dependencies {
     // Firebase
     implementation platform('com.google.firebase:firebase-bom:34.19.0')
     implementation 'com.google.firebase:firebase-crashlytics'
-    implementation 'com.google.firebase:firebase-config'
     implementation 'com.google.firebase:firebase-analytics'
 
     // OkHttp

@@ -1,9 +1,12 @@
 package net.yupol.transmissionremote.app.e2e.robots
 
+import androidx.test.espresso.Espresso.onData
+import androidx.test.espresso.action.ViewActions.click
 import net.yupol.transmissionremote.app.R
 import net.yupol.transmissionremote.app.e2e.utils.assertViewWithIdDisplayed
 import net.yupol.transmissionremote.app.e2e.utils.clickId
 import net.yupol.transmissionremote.app.e2e.utils.inputText
+import org.hamcrest.CoreMatchers.`is`
 
 class AddServerRobot {
 
@@ -17,6 +20,11 @@ class AddServerRobot {
 
     fun enterPort(port: Int) {
         inputText(R.id.port_edit_text, port.toString())
+    }
+
+    fun selectHttp() {
+        clickId(R.id.protocol_spinner)
+        onData(`is`("http")).perform(click())
     }
 
     fun clickOk() {

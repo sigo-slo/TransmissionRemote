@@ -34,9 +34,8 @@ public abstract class RetryPropagateRequestListener<T> extends PropagateRequestL
     protected boolean onFailure(SpiceException spiceException) {
         int statusCode = request.getResponseStatusCode();
         if (statusCode == HttpURLConnection.HTTP_CONFLICT) {
-            Log.d(TAG, "SC_CONFLICT old sessionId: " + request.getServer().getLastSessionId());
             String responseSessionId = request.getResponseSessionId();
-            Log.d(TAG, "new sessionId: " + responseSessionId);
+            Log.d(TAG, "Transmission session refreshed");
             request.getServer().setLastSessionId(responseSessionId);
             retry(request, listener);
             return false;

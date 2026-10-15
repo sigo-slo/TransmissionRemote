@@ -8,11 +8,14 @@ import android.content.Context
 import android.content.SharedPreferences
 import android.content.SharedPreferences.OnSharedPreferenceChangeListener
 import android.os.Build
+import android.util.Log
 import androidx.preference.PreferenceManager
 import androidx.appcompat.app.AppCompatDelegate
 import androidx.lifecycle.ProcessLifecycleOwner
 import androidx.lifecycle.lifecycleScope
 import com.evernote.android.job.JobManager
+import com.google.firebase.analytics.FirebaseAnalytics
+import com.google.firebase.crashlytics.FirebaseCrashlytics
 import dagger.hilt.android.HiltAndroidApp
 import kotlinx.coroutines.launch
 import net.yupol.transmissionremote.app.analytics.Analytics
@@ -22,14 +25,13 @@ import net.yupol.transmissionremote.app.model.json.Torrent
 import net.yupol.transmissionremote.app.notifications.BackgroundUpdateJob
 import net.yupol.transmissionremote.app.notifications.BackgroundUpdater
 import net.yupol.transmissionremote.app.preferences.PreferencesRepository
+import net.yupol.transmissionremote.app.security.ServerConfigCipher
 import net.yupol.transmissionremote.app.server.Server
 import net.yupol.transmissionremote.app.sorting.SortOrder
 import net.yupol.transmissionremote.app.sorting.SortedBy
 import net.yupol.transmissionremote.app.theme.NightMode
 import java.util.LinkedList
-import java.util.Objects
 import java.util.WeakHashMap
-import java.util.stream.Collectors
 import javax.inject.Inject
 
 @HiltAndroidApp
@@ -72,7 +74,6 @@ class TransmissionRemote : Application(), OnSharedPreferenceChangeListener {
     var appStartupTimeReported = false
 
     @Inject lateinit var analytics: Analytics
-    @Inject lateinit var featureManager: FeatureManager
     @Inject lateinit var preferencesRepository: PreferencesRepository
 
     override fun onCreate() {
@@ -100,6 +101,9 @@ class TransmissionRemote : Application(), OnSharedPreferenceChangeListener {
         instance = this
         restore()
         sharedPreferences = PreferenceManager.getDefaultSharedPreferences(this)
+        configureFirebaseCollection(
+            sharedPreferences.getBoolean(getString(R.string.firebase_collection_enabled_key), false)
+        )
         sharedPreferences.registerOnSharedPreferenceChangeListener(this)
         JobManager.create(this)
             .addJobCreator(BackgroundUpdateJob.Creator())
@@ -122,6 +126,10 @@ class TransmissionRemote : Application(), OnSharedPreferenceChangeListener {
             }
         } else if (key == getString(R.string.background_update_only_unmetered_wifi_key)) {
             BackgroundUpdater.restart(this)
+        } else if (key == getString(R.string.firebase_collection_enabled_key)) {
+            configureFirebaseCollection(
+                sharedPreferences.getBoolean(getString(R.string.firebase_collection_enabled_key), false)
+            )
         }
     }
 
@@ -286,44 +294,72 @@ class TransmissionRemote : Application(), OnSharedPreferenceChangeListener {
     }
 
     fun persistServers() {
-        val serversInJson = servers.stream().map { obj: Server? -> obj!!.toJson() }
-            .collect(Collectors.toSet())
+        val encryptedServers = servers.mapNotNull { server ->
+            server?.let { ServerConfigCipher.encrypt(it.toJson()) }
+        }.toSet()
         val sp = getSharedPreferences(SHARED_PREFS_NAME, MODE_PRIVATE)
-        val editor = sp.edit()
-        editor.putStringSet(KEY_SERVERS, serversInJson)
-        editor.apply()
+        sp.edit().putStringSet(KEY_SERVERS, encryptedServers).apply()
     }
 
     private fun restoreServers() {
         val sp = getSharedPreferences(SHARED_PREFS_NAME, MODE_PRIVATE)
-        val serversInJson = sp.getStringSet(KEY_SERVERS, emptySet())
-        servers.addAll(
-            serversInJson!!.stream().map { jsonObj: String? -> Server.fromJson(jsonObj) }
-                .filter { obj: Server? -> Objects.nonNull(obj) }.collect(Collectors.toList())
-        )
-        val activeServerInJson = sp.getString(KEY_ACTIVE_SERVER, null)
-        if (activeServerInJson != null) {
-            val persistedActiveServer = Server.fromJson(activeServerInJson)
-            // active server should point to object in all servers list
-            activeServer = servers.stream()
-                .filter { server: Server? -> server == persistedActiveServer }
-                .findFirst()
-                .orElse(null)
-            fireActiveServerChangedEvent()
-        } else {
-            activeServer = null
+        var needsMigration = false
+        for (storedServer in sp.getStringSet(KEY_SERVERS, emptySet()).orEmpty()) {
+            try {
+                if (!ServerConfigCipher.isEncrypted(storedServer)) needsMigration = true
+                Server.fromJson(ServerConfigCipher.decrypt(storedServer))?.let { server ->
+                    if (server.trustSelfSignedSslCert) {
+                        server.trustSelfSignedSslCert = false
+                        needsMigration = true
+                    }
+                    servers.add(server)
+                }
+            } catch (error: Exception) {
+                Log.e(TAG, "Unable to decrypt a saved server configuration", error)
+            }
         }
+
+        val activeServerId = sp.getString(KEY_ACTIVE_SERVER_ID, null) ?: run {
+            val legacyActiveServer = sp.getString(KEY_ACTIVE_SERVER, null)
+            if (legacyActiveServer != null) {
+                needsMigration = true
+                try {
+                    Server.fromJson(ServerConfigCipher.decrypt(legacyActiveServer))?.id
+                } catch (error: Exception) {
+                    Log.e(TAG, "Unable to decrypt the active server configuration", error)
+                    null
+                }
+            } else null
+        }
+        activeServer = servers.firstOrNull { it?.id == activeServerId }
         if (activeServer == null && servers.isNotEmpty()) {
             activeServer = servers[0]
+        }
+        if (activeServer != null) fireActiveServerChangedEvent()
+
+        if (needsMigration) {
+            persistServers()
+            persistActiveServer()
         }
     }
 
     private fun persistActiveServer() {
-        val serverInJson = if (activeServer != null) activeServer!!.toJson() else null
         val sp = getSharedPreferences(SHARED_PREFS_NAME, MODE_PRIVATE)
-        val editor = sp.edit()
-        editor.putString(KEY_ACTIVE_SERVER, serverInJson)
-        editor.apply()
+        sp.edit()
+            .putString(KEY_ACTIVE_SERVER_ID, activeServer?.id)
+            .remove(KEY_ACTIVE_SERVER)
+            .apply()
+    }
+
+    private fun configureFirebaseCollection(enabled: Boolean) {
+        FirebaseAnalytics.getInstance(this).apply {
+            setAnalyticsCollectionEnabled(enabled)
+            if (!enabled) resetAnalyticsData()
+        }
+        FirebaseCrashlytics.getInstance().apply {
+            setCrashlyticsCollectionEnabled(enabled)
+            if (!enabled) deleteUnsentReports()
+        }
     }
 
     private fun persistFilter() {
@@ -393,8 +429,11 @@ class TransmissionRemote : Application(), OnSharedPreferenceChangeListener {
     }
 
     companion object {
+        private val TAG = TransmissionRemote::class.java.simpleName
         private const val SHARED_PREFS_NAME = "transmission_remote_shared_prefs"
         private const val KEY_SERVERS = "key_servers"
+        private const val KEY_ACTIVE_SERVER_ID = "key_active_server_id"
+        @Deprecated("Only used to migrate pre-encryption preferences")
         private const val KEY_ACTIVE_SERVER = "key_active_server"
         private const val KEY_FILTER = "key_filter"
         private const val KEY_SORTED_BY = "key_sorted_by"

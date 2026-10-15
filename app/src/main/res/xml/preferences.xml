@@ -28,6 +28,12 @@
         android:key="@string/show_add_torrent_fab_key"
         android:defaultValue="@string/show_add_torrent_fab_default_value"
         app:iconSpaceReserved="false" />
+    <androidx.preference.SwitchPreferenceCompat
+        android:key="@string/firebase_collection_enabled_key"
+        android:title="@string/firebase_collection_enabled_title"
+        android:summary="@string/firebase_collection_enabled_summary"
+        android:defaultValue="false"
+        app:iconSpaceReserved="false" />
     <PreferenceScreen
         android:title="@string/preferences_advanced_title"
         android:summary="@string/preferences_advanced_summary"

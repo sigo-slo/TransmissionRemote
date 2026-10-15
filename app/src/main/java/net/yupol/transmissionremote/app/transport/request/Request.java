@@ -118,7 +118,7 @@ public abstract class Request<RESULT> extends GoogleHttpClientSpiceRequest<RESUL
 
         HttpHeaders headers = new HttpHeaders()
                 .set("x-transmission-session-id", Strings.emptyToNull(server.getLastSessionId()));
-        if (server.isAuthenticationEnabled()) {
+        if (server.isAuthenticationEnabled() && server.useHttps()) {
             headers.setBasicAuthentication(server.getUserName(), server.getPassword());
         }
         request.setHeaders(headers);
