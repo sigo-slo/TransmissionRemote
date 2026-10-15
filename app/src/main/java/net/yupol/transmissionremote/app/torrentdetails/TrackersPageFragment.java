@@ -32,7 +32,6 @@ import com.octo.android.robospice.persistence.exception.SpiceException;
 import com.octo.android.robospice.request.listener.RequestListener;
 
 import net.yupol.transmissionremote.app.R;
-import net.yupol.transmissionremote.app.TransmissionRemote;
 import net.yupol.transmissionremote.app.databinding.TorrentDetailsTrackersPageFragmentBinding;
 import net.yupol.transmissionremote.app.model.json.TorrentInfo;
 import net.yupol.transmissionremote.app.model.json.TrackerStats;
@@ -109,15 +108,6 @@ public class TrackersPageFragment extends BasePageFragment implements TrackersAd
         viewCreated = true;
 
         return binding.getRoot();
-    }
-
-    @Override
-    public void onResume() {
-        super.onResume();
-        TransmissionRemote.getInstance().getAnalytics().logScreenView(
-                "Trackers page",
-                TrackersPageFragment.class
-        );
     }
 
     @Override

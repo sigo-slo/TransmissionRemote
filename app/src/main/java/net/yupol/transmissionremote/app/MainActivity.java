@@ -233,7 +233,6 @@ public class MainActivity extends BaseSpiceActivity implements TorrentUpdater.To
         SplashScreen.installSplashScreen(this);
         application = TransmissionRemote.getApplication(this);
         super.onCreate(savedInstanceState);
-        logAppStartupTime();
         binding = DataBindingUtil.setContentView(this, R.layout.main_activity);
 
         finishedTorrentsNotificationManager = new FinishedTorrentsNotificationManager(this);
@@ -249,13 +248,6 @@ public class MainActivity extends BaseSpiceActivity implements TorrentUpdater.To
             openTorrentUri = savedInstanceState.getParcelable(KEY_OPEN_TORRENT_URI);
             openTorrentScheme = savedInstanceState.getString(KEY_OPEN_TORRENT_SCHEME);
         }
-    }
-
-    private void logAppStartupTime() {
-        if (application.appStartupTimeReported) return;
-        final long startupTimeMillis = System.currentTimeMillis() - application.appStartTimestampMillis;
-        application.getAnalytics().logStartupTimeSLI(startupTimeMillis);
-        application.appStartupTimeReported = true;
     }
 
     private void setupActionBar() {

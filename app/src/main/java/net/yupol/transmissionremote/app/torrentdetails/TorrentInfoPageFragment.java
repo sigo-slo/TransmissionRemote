@@ -14,7 +14,6 @@ import android.view.ViewGroup;
 import android.widget.Toast;
 
 import net.yupol.transmissionremote.app.R;
-import net.yupol.transmissionremote.app.TransmissionRemote;
 import net.yupol.transmissionremote.app.databinding.TorrentDetailsInfoPageFragmentBinding;
 import net.yupol.transmissionremote.app.model.json.Torrent;
 import net.yupol.transmissionremote.app.model.json.TorrentInfo;
@@ -46,15 +45,6 @@ public class TorrentInfoPageFragment extends BasePageFragment {
         binding.setTorrentInfo(getTorrentInfo());
 
         return binding.getRoot();
-    }
-
-    @Override
-    public void onResume() {
-        super.onResume();
-        TransmissionRemote.getInstance().getAnalytics().logScreenView(
-                "Torrent info page",
-                TorrentInfoPageFragment.class
-        );
     }
 
     @Override

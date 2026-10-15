@@ -14,11 +14,8 @@ import androidx.appcompat.app.AppCompatDelegate
 import androidx.lifecycle.ProcessLifecycleOwner
 import androidx.lifecycle.lifecycleScope
 import com.evernote.android.job.JobManager
-import com.google.firebase.analytics.FirebaseAnalytics
-import com.google.firebase.crashlytics.FirebaseCrashlytics
 import dagger.hilt.android.HiltAndroidApp
 import kotlinx.coroutines.launch
-import net.yupol.transmissionremote.app.analytics.Analytics
 import net.yupol.transmissionremote.app.filtering.Filter
 import net.yupol.transmissionremote.app.filtering.Filters
 import net.yupol.transmissionremote.app.model.json.Torrent
@@ -68,12 +65,6 @@ class TransmissionRemote : Application(), OnSharedPreferenceChangeListener {
     var defaultDownloadDir: String? = null
     private val speedLimitsCache: MutableMap<Server?, Boolean> = WeakHashMap()
     private lateinit var sharedPreferences: SharedPreferences
-    @JvmField
-    val appStartTimestampMillis = System.currentTimeMillis()
-    @JvmField
-    var appStartupTimeReported = false
-
-    @Inject lateinit var analytics: Analytics
     @Inject lateinit var preferencesRepository: PreferencesRepository
 
     override fun onCreate() {
@@ -101,9 +92,6 @@ class TransmissionRemote : Application(), OnSharedPreferenceChangeListener {
         instance = this
         restore()
         sharedPreferences = PreferenceManager.getDefaultSharedPreferences(this)
-        configureFirebaseCollection(
-            sharedPreferences.getBoolean(getString(R.string.firebase_collection_enabled_key), false)
-        )
         sharedPreferences.registerOnSharedPreferenceChangeListener(this)
         JobManager.create(this)
             .addJobCreator(BackgroundUpdateJob.Creator())
@@ -126,10 +114,6 @@ class TransmissionRemote : Application(), OnSharedPreferenceChangeListener {
             }
         } else if (key == getString(R.string.background_update_only_unmetered_wifi_key)) {
             BackgroundUpdater.restart(this)
-        } else if (key == getString(R.string.firebase_collection_enabled_key)) {
-            configureFirebaseCollection(
-                sharedPreferences.getBoolean(getString(R.string.firebase_collection_enabled_key), false)
-            )
         }
     }
 
@@ -349,17 +333,6 @@ class TransmissionRemote : Application(), OnSharedPreferenceChangeListener {
             .putString(KEY_ACTIVE_SERVER_ID, activeServer?.id)
             .remove(KEY_ACTIVE_SERVER)
             .apply()
-    }
-
-    private fun configureFirebaseCollection(enabled: Boolean) {
-        FirebaseAnalytics.getInstance(this).apply {
-            setAnalyticsCollectionEnabled(enabled)
-            if (!enabled) resetAnalyticsData()
-        }
-        FirebaseCrashlytics.getInstance().apply {
-            setCrashlyticsCollectionEnabled(enabled)
-            if (!enabled) deleteUnsentReports()
-        }
     }
 
     private fun persistFilter() {

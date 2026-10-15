@@ -58,9 +58,6 @@
     <string name="notification_settings">Notification settings</string>
     <string name="advanced_pref_title">Advanced preferences</string>
     <string name="show_add_torrent_fab_title">Show \"Add torrent\" floating button</string>
-    <string name="firebase_collection_enabled_key" translatable="false">firebase_collection_enabled</string>
-    <string name="firebase_collection_enabled_title">Share diagnostics</string>
-    <string name="firebase_collection_enabled_summary">Share usage analytics and crash reports through Firebase</string>
 
     <!-- Servers -->
     <string name="add_new_server_title">Add new server</string>
